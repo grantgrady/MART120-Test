@@ -1,0 +1,144 @@
+<!COMPLICATEDGAMEPART1 html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Game</title>
+  <style>
+    canvas {
+      border: 2px solid black;
+      display: block;
+      margin: auto;
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="500" height="300"></canvas>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let player = createPlayer(40, 40, 20, "blue", 4);
+const exit = createExit(460, 260, 30, 30, "green");
+let staticObstacles = [];
+let dynamicObstacles = createObstacles();
+let keys = {};
+
+document.addEventListener("keydown", (e) => (keys[e.key] = true));
+document.addEventListener("keyup", (e) => (keys[e.key] = false));
+canvas.addEventListener("click", createStaticObstacle);
+
+function createPlayer(x, y, size, color, speed) {
+  return { x, y, size, color, speed };
+}
+
+function movePlayer() {
+  if (keys["ArrowUp"]) player.y -= player.speed;
+  if (keys["ArrowDown"]) player.y += player.speed;
+  if (keys["ArrowLeft"]) player.x -= player.speed;
+  if (keys["ArrowRight"]) player.x += player.speed;
+}
+
+function createStaticObstacle(event) {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = event.clientX - rect.left;
+  const mouseY = event.clientY - rect.top;
+  staticObstacles.push({ x: mouseX - 15, y: mouseY - 15, width: 30, height: 30, color: "#555" });
+}
+
+function createObstacles() {
+  return [
+    { x: 200, y: 100, width: 30, height: 30, color: "red", speedX: 2, speedY: 1.5 },
+    { x: 300, y: 50, width: 40, height: 40, color: "purple", speedX: -1.5, speedY: 2 }
+  ];
+}
+
+function moveObstacle(obstacle) {
+  obstacle.x += obstacle.speedX;
+  obstacle.y += obstacle.speedY;
+
+  if (obstacle.x + obstacle.width < 0) obstacle.x = canvas.width;
+  if (obstacle.x > canvas.width) obstacle.x = -obstacle.width;
+  if (obstacle.y + obstacle.height < 0) obstacle.y = canvas.height;
+  if (obstacle.y > canvas.height) obstacle.y = -obstacle.height;
+}
+
+function drawObstacle(obstacle) {
+  ctx.fillStyle = obstacle.color;
+  ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+}
+
+function createBorder() {
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+}
+
+function createExit(x, y, width, height, color) {
+  return { x, y, width, height, color };
+}
+
+function drawExit(exit) {
+  ctx.fillStyle = exit.color;
+  ctx.fillRect(exit.x, exit.y, exit.width, exit.height);
+}
+
+function displayWinMessage() {
+  ctx.fillStyle = "green";
+  ctx.font = "30px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("You Win!", canvas.width / 2, canvas.height / 2);
+}
+
+function update() {
+  movePlayer();
+  dynamicObstacles.forEach(moveObstacle);
+  draw();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  createBorder();
+  drawPlayer();
+  dynamicObstacles.forEach(drawObstacle);
+  staticObstacles.forEach((obs) => {
+    ctx.fillStyle = obs.color;
+    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+  });
+  drawExit(exit);
+
+  if (
+    player.x < exit.x + exit.width &&
+    player.x + player.size > exit.x &&
+    player.y < exit.y + exit.height &&
+    player.y + player.size > exit.y
+  ) {
+    displayWinMessage();
+    resetGame();
+  }
+}
+
+function drawPlayer() {
+  ctx.fillStyle = player.color;
+  ctx.fillRect(player.x, player.y, player.size, player.size);
+}
+
+function resetGame() {
+  player = createPlayer(40, 40, 20, "blue", 4);
+  staticObstacles = [];
+  dynamicObstacles = createObstacles();
+}
+
+function gameLoop() {
+  update();
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
